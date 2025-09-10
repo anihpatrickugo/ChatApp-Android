@@ -13,6 +13,8 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Tab
@@ -21,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,31 +32,35 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import com.example.test_android.domain.tabItems
 import com.example.test_android.domain.TabItem
 import com.example.test_android.ui.theme.PoppinsFont
-import com.example.test_android.ui.screens.dashboard.topTab.HomeScreen
-import com.example.test_android.ui.screens.dashboard.topTab.ProfileScreen
-import com.example.test_android.ui.screens.dashboard.topTab.SettingsScreen
+import com.example.test_android.ui.screens.dashboard.topTab.ChatsScreen
+import com.example.test_android.ui.screens.dashboard.topTab.GroupsScreen
+import com.example.test_android.ui.screens.dashboard.topTab.FriendsScreen
 import com.example.test_android.ui.theme.PrimaryColor
+import androidx.compose.runtime.*
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TopTabsScreen() {
-    val pagerState = rememberPagerState(
-        initialPage = 0,
-    )
+fun TopTabsScreen(navController: NavController) {
+    val pagerState = rememberPagerState {
+        tabItems.size
+    }
+    var expanded by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier.fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 0.dp),
+            .padding(16.dp),
         verticalArrangement = Arrangement.SpaceBetween
         ) {
 
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth()
+                .padding(top=4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -76,10 +83,10 @@ fun TopTabsScreen() {
                    )
                }
 
-               IconButtont(
-                   modifier = Modifier.background(Color.Red),
+               IconButton(
                    onClick = {
-                   print("clicked icon")
+                   expanded = !expanded
+
                }) {
                    Icon(
                        imageVector = Icons.Default.MoreVert,
@@ -87,15 +94,37 @@ fun TopTabsScreen() {
 
                    )
                }
+
+               // Dropdown menu
+               DropdownMenu(
+                   expanded = expanded,
+                   onDismissRequest = { expanded = true }
+               ) {
+                   DropdownMenuItem(
+                       text = { Text("Settings") },
+                       onClick = {
+                           expanded = false
+                           navController.navigate("settings")
+                       }
+                   )
+                   DropdownMenuItem(
+                       text = { Text("New Requests") },
+                       onClick = {
+                           expanded = false
+//                    onLogoutClick()
+                       }
+                   )
+               }
            }
 
         }
+
         TabRow(
             selectedTabIndex = pagerState.currentPage,
             modifier = Modifier.fillMaxWidth(),
             divider = {},
             indicator = { tabPositions ->
-                TabRowDefaults.Indicator(
+                TabRowDefaults.SecondaryIndicator(
                     modifier = Modifier.tabIndicatorOffset(tabPositions[pagerState.currentPage]),
                     color = PrimaryColor// Change this to your desired color
                 )
@@ -118,22 +147,23 @@ fun TopTabsScreen() {
                         fontFamily = PoppinsFont
                         )
                            },
+
                 )
             }
         }
 
         HorizontalPager(
             state = pagerState,
-            pageCount = 3,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f) // Makes the pager fill the remaining space
         ) {
                 page ->
             when (tabItems[page]) {
-                is TabItem.Home -> HomeScreen()
-                is TabItem.Profile -> ProfileScreen()
-                is TabItem.Settings -> SettingsScreen()
+                is TabItem.Chats -> ChatsScreen(navController)
+                is TabItem.Groups -> GroupsScreen(navController)
+                is TabItem.Friends -> FriendsScreen(navController)
+                else -> {}
             }
         }
     }

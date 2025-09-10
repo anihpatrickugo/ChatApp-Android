@@ -9,13 +9,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 sealed class TabItem(val title: String) {
 
     // without icon
-    object Home : TabItem("Home")
-    object Profile : TabItem("Profile")
-    object Settings : TabItem("Settings")
+    object Chats : TabItem("Chats")
+    object Groups : TabItem("Groups")
+    object Friends : TabItem("Friends")
 }
 
 val tabItems = listOf(
-    TabItem.Home,
-    TabItem.Profile,
-    TabItem.Settings
+    TabItem.Chats,
+    TabItem.Groups,
+    TabItem.Friends
 )

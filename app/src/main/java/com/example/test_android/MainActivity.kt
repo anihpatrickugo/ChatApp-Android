@@ -9,18 +9,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.example.test_android.ui.theme.TestandroidTheme
 import androidx.compose.runtime.Composable
+import androidx.core.view.WindowCompat
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.test_android.ui.screens.authentication.OnboardingScreen
 import com.example.test_android.ui.screens.authentication.LoginScreen
 import com.example.test_android.ui.screens.authentication.SignupScreen
+import com.example.test_android.ui.screens.dashboard.AccountScreen
+import com.example.test_android.ui.screens.dashboard.ChatDetailScreen
+import com.example.test_android.ui.screens.dashboard.GroupChatDetailScreen
 import com.example.test_android.ui.screens.dashboard.topTab.TopTabsScreen
+import com.example.test_android.ui.screens.dashboard.ProfileScreen
+import com.example.test_android.ui.screens.dashboard.GroupInfoScreen
+import com.example.test_android.ui.screens.dashboard.SettingsScreen
+import com.example.test_android.ui.screens.dashboard.EditProfileScreen
+import com.example.test_android.ui.screens.dashboard.HelpScreen
+import com.example.test_android.ui.screens.dashboard.QRCodeTab.QRCodeTab
 
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Tell system to let Compose handle keyboard insets
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
         setContent {
             TestandroidTheme {
                 // A surface container using the 'background' color from the theme
@@ -38,8 +54,14 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MyAppNavigation() {
+
+
+
     val navController = rememberNavController()
-    NavHost(navController = navController, startDestination = "onboarding") {
+    NavHost(
+        navController = navController,
+        startDestination = MyApp.startDestination
+    ) {
         composable("onboarding") {
             OnboardingScreen(navController = navController)
         }
@@ -50,7 +72,60 @@ fun MyAppNavigation() {
             SignupScreen(navController = navController)
         }
         composable("home") {
-            TopTabsScreen()
+            TopTabsScreen(navController = navController)
+        }
+
+        composable(
+            route = "chat-detail/{itemId}",
+            arguments = listOf(navArgument("itemId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val itemId = backStackEntry.arguments?.getInt("itemId")
+            ChatDetailScreen(navController=navController, itemId = itemId)
+        }
+
+        composable(
+            route = "group-chat-detail/{itemId}",
+            arguments = listOf(navArgument("itemId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val itemId = backStackEntry.arguments?.getInt("itemId")
+            GroupChatDetailScreen(navController=navController, itemId = itemId)
+        }
+
+
+        composable(
+            route = "profile/{Id}",
+            arguments = listOf(navArgument("Id") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val Id = backStackEntry.arguments?.getInt("Id")
+            ProfileScreen(navController=navController, Id = Id)
+        }
+
+        composable(
+            route = "group/{Id}",
+            arguments = listOf(navArgument("Id") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val Id = backStackEntry.arguments?.getInt("Id")
+            GroupInfoScreen(navController=navController, Id = Id)
+        }
+
+        composable("settings") {
+            SettingsScreen(navController = navController)
+        }
+
+        composable("edit-profile") {
+            EditProfileScreen(navController = navController)
+        }
+
+        composable ("qr-code") {
+            QRCodeTab(navController = navController)
+        }
+
+        composable ("account") {
+            AccountScreen(navController)
+        }
+
+        composable ("help") {
+            HelpScreen(navController)
         }
     }
 }

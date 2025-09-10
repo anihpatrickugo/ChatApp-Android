@@ -94,7 +94,7 @@ fun SignupScreen(navController: NavController) {
         ){
             Text(
                 text = "Sign up for free",
-                fontWeight = FontWeight.Bold,
+                fontWeight = FontWeight.ExtraBold,
                 fontFamily = PoppinsFont,
                 fontSize = 18.sp,
                 textAlign = TextAlign.Center
@@ -102,7 +102,7 @@ fun SignupScreen(navController: NavController) {
 
             Column(modifier = Modifier.padding(vertical=16.dp)) {
 
-                Text(text = "Lastname:", Modifier.padding(horizontal = 20.dp))
+                Text(text = "Lastname:", Modifier.padding(horizontal = 20.dp), fontWeight = FontWeight.Bold)
                 // 2. Pass the state variable to the value parameter
                 TextField(
                     value = first_name,
@@ -111,9 +111,9 @@ fun SignupScreen(navController: NavController) {
                         first_name = newText
                     },
 
-                    label = { Text("Enter your first name", color = Color.LightGray, fontSize = 12.sp) },
+                    label = { Text("Enter your first name", color = Color.Gray, fontSize = 12.sp) },
                     modifier = Modifier.fillMaxWidth(),
-                    textStyle = TextStyle(fontSize = 12.sp),
+                    textStyle = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold),
                     singleLine = true,
                     shape = RoundedCornerShape(50.dp),
                     colors = TextFieldDefaults.textFieldColors(
@@ -136,7 +136,7 @@ fun SignupScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.padding(vertical = 8.dp))
 
-                Text(text = "Lastname:", Modifier.padding(horizontal = 20.dp))
+                Text(text = "Lastname:", Modifier.padding(horizontal = 20.dp), fontWeight = FontWeight.Bold)
                 // 2. Pass the state variable to the value parameter
                 TextField(
                     value = last_name,
@@ -145,9 +145,9 @@ fun SignupScreen(navController: NavController) {
                         last_name = newText
                     },
 
-                    label = { Text("Enter your last name", color = Color.LightGray, fontSize = 12.sp) },
+                    label = { Text("Enter your last name", color = Color.Gray, fontSize = 12.sp) },
                     modifier = Modifier.fillMaxWidth(),
-                    textStyle = TextStyle(fontSize = 12.sp),
+                    textStyle = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold),
                     singleLine = true,
                     shape = RoundedCornerShape(50.dp),
                     colors = TextFieldDefaults.textFieldColors(
@@ -170,7 +170,7 @@ fun SignupScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.padding(vertical = 8.dp))
 
-                Text(text = "Username:", Modifier.padding(horizontal = 20.dp))
+                Text(text = "Username:", Modifier.padding(horizontal = 20.dp), fontWeight = FontWeight.Bold)
                 // 2. Pass the state variable to the value parameter
                 TextField(
                     value = username,
@@ -179,9 +179,9 @@ fun SignupScreen(navController: NavController) {
                         username = newText
                     },
 
-                    label = { Text("Enter your username", color = Color.LightGray, fontSize = 12.sp) },
+                    label = { Text("Enter your username", color = Color.Gray, fontSize = 12.sp) },
                     modifier = Modifier.fillMaxWidth(),
-                    textStyle = TextStyle(fontSize = 12.sp),
+                    textStyle = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold),
                     singleLine = true,
                     shape = RoundedCornerShape(50.dp),
                     colors = TextFieldDefaults.textFieldColors(
@@ -204,7 +204,7 @@ fun SignupScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.padding(vertical = 8.dp))
 
-                Text(text = "Email:", Modifier.padding(horizontal = 20.dp))
+                Text(text = "Email:", Modifier.padding(horizontal = 20.dp), fontWeight = FontWeight.Bold)
                 // 2. Pass the state variable to the value parameter
                 TextField(
                     value = email,
@@ -213,9 +213,9 @@ fun SignupScreen(navController: NavController) {
                         email = newText
                     },
 
-                    label = { Text("Enter your email", color = Color.LightGray, fontSize = 12.sp) },
+                    label = { Text("Enter your email", color = Color.Gray, fontSize = 12.sp) },
                     modifier = Modifier.fillMaxWidth(),
-                    textStyle = TextStyle(fontSize = 12.sp),
+                    textStyle = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold),
                     singleLine = true,
                     shape = RoundedCornerShape(50.dp),
                     colors = TextFieldDefaults.textFieldColors(
@@ -238,7 +238,7 @@ fun SignupScreen(navController: NavController) {
 
                 Spacer(modifier = Modifier.padding(vertical = 8.dp))
 
-                Text(text = "Passowrd:", Modifier.padding(horizontal = 20.dp))
+                Text(text = "Passowrd:", Modifier.padding(horizontal = 20.dp), fontWeight = FontWeight.Bold)
                 // 2. Pass the state variable to the value parameter
                 TextField(
                     value = password,
@@ -247,9 +247,9 @@ fun SignupScreen(navController: NavController) {
                         password = newText
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    label = { Text("Enter your password", color = Color.LightGray, fontSize = 12.sp) },
+                    label = { Text("Enter your password", color = Color.Gray, fontSize = 12.sp) },
                     modifier = Modifier.fillMaxWidth(),
-                    textStyle = TextStyle(fontSize = 12.sp),
+                    textStyle = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold),
                     singleLine = true,
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     shape = RoundedCornerShape(50.dp),
