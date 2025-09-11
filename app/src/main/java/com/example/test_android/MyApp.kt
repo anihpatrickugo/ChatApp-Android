@@ -11,7 +11,7 @@ import kotlinx.coroutines.runBlocking
 
 class MyApp : Application() {
     companion object {
-        var startDestination: String = "login"  // default
+        var startDestination: String = "onboarding"  // default
     }
 
     override fun onCreate() {
@@ -29,7 +29,7 @@ class MyApp : Application() {
         startDestination = if (!accessToken.isNullOrEmpty()) {
             "home"  // go directly to dashboard
         } else {
-            "login"
+            "onboarding"
         }
     }
 }

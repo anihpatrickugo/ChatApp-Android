@@ -3,18 +3,25 @@ package com.example.test_android
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import com.example.test_android.ui.theme.TestandroidTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.test_android.data.local.TokenManager
+import com.example.test_android.ui.providers.LocalUserViewModel
 import com.example.test_android.ui.screens.authentication.OnboardingScreen
 import com.example.test_android.ui.screens.authentication.LoginScreen
 import com.example.test_android.ui.screens.authentication.SignupScreen
@@ -28,9 +35,16 @@ import com.example.test_android.ui.screens.dashboard.SettingsScreen
 import com.example.test_android.ui.screens.dashboard.EditProfileScreen
 import com.example.test_android.ui.screens.dashboard.HelpScreen
 import com.example.test_android.ui.screens.dashboard.QRCodeTab.QRCodeTab
+import com.example.test_android.ui.viewmodel.UserViewModel
+import com.example.test_android.ui.viewmodel.UserViewModelFactory
 
 
 class MainActivity : ComponentActivity() {
+
+    private val userViewModel: UserViewModel by viewModels {
+        UserViewModelFactory(this)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -38,6 +52,7 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
         setContent {
+
             TestandroidTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
@@ -45,7 +60,7 @@ class MainActivity : ComponentActivity() {
                     color = Color(red=255,green=255, blue=255),
 
                     ) {
-                      MyAppNavigation()
+                      MyAppNavigation(userViewModel)
                 }
             }
         }
@@ -53,79 +68,89 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MyAppNavigation() {
+fun MyAppNavigation(userViewModel: UserViewModel) {
 
+    LaunchedEffect(Unit) {
+        userViewModel.getUserInfo()
+    }
 
 
     val navController = rememberNavController()
-    NavHost(
-        navController = navController,
-        startDestination = MyApp.startDestination
+
+    CompositionLocalProvider(
+        LocalUserViewModel provides userViewModel
     ) {
-        composable("onboarding") {
-            OnboardingScreen(navController = navController)
-        }
-        composable("login") {
-            LoginScreen(navController = navController)
-        }
-        composable("signup") {
-            SignupScreen(navController = navController)
-        }
-        composable("home") {
-            TopTabsScreen(navController = navController)
+
+        NavHost(
+            navController = navController,
+            startDestination = MyApp.startDestination
+        ) {
+            composable("onboarding") {
+                OnboardingScreen(navController = navController)
+            }
+            composable("login") {
+                LoginScreen(navController = navController)
+            }
+            composable("signup") {
+                SignupScreen(navController = navController)
+            }
+            composable("home") {
+                TopTabsScreen(navController = navController)
+            }
+
+            composable(
+                route = "chat-detail/{itemId}",
+                arguments = listOf(navArgument("itemId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val itemId = backStackEntry.arguments?.getInt("itemId")
+                ChatDetailScreen(navController=navController, itemId = itemId)
+            }
+
+            composable(
+                route = "group-chat-detail/{itemId}",
+                arguments = listOf(navArgument("itemId") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val itemId = backStackEntry.arguments?.getInt("itemId")
+                GroupChatDetailScreen(navController=navController, itemId = itemId)
+            }
+
+
+            composable(
+                route = "profile/{Id}",
+                arguments = listOf(navArgument("Id") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val Id = backStackEntry.arguments?.getInt("Id")
+                ProfileScreen(navController=navController, Id = Id)
+            }
+
+            composable(
+                route = "group/{Id}",
+                arguments = listOf(navArgument("Id") { type = NavType.IntType })
+            ) { backStackEntry ->
+                val Id = backStackEntry.arguments?.getInt("Id")
+                GroupInfoScreen(navController=navController, Id = Id)
+            }
+
+            composable("settings") {
+                SettingsScreen(navController = navController)
+            }
+
+            composable("edit-profile") {
+                EditProfileScreen(navController = navController)
+            }
+
+            composable ("qr-code") {
+                QRCodeTab(navController = navController)
+            }
+
+            composable ("account") {
+                AccountScreen(navController)
+            }
+
+            composable ("help") {
+                HelpScreen(navController)
+            }
         }
 
-        composable(
-            route = "chat-detail/{itemId}",
-            arguments = listOf(navArgument("itemId") { type = NavType.IntType })
-        ) { backStackEntry ->
-            val itemId = backStackEntry.arguments?.getInt("itemId")
-            ChatDetailScreen(navController=navController, itemId = itemId)
-        }
-
-        composable(
-            route = "group-chat-detail/{itemId}",
-            arguments = listOf(navArgument("itemId") { type = NavType.IntType })
-        ) { backStackEntry ->
-            val itemId = backStackEntry.arguments?.getInt("itemId")
-            GroupChatDetailScreen(navController=navController, itemId = itemId)
-        }
-
-
-        composable(
-            route = "profile/{Id}",
-            arguments = listOf(navArgument("Id") { type = NavType.IntType })
-        ) { backStackEntry ->
-            val Id = backStackEntry.arguments?.getInt("Id")
-            ProfileScreen(navController=navController, Id = Id)
-        }
-
-        composable(
-            route = "group/{Id}",
-            arguments = listOf(navArgument("Id") { type = NavType.IntType })
-        ) { backStackEntry ->
-            val Id = backStackEntry.arguments?.getInt("Id")
-            GroupInfoScreen(navController=navController, Id = Id)
-        }
-
-        composable("settings") {
-            SettingsScreen(navController = navController)
-        }
-
-        composable("edit-profile") {
-            EditProfileScreen(navController = navController)
-        }
-
-        composable ("qr-code") {
-            QRCodeTab(navController = navController)
-        }
-
-        composable ("account") {
-            AccountScreen(navController)
-        }
-
-        composable ("help") {
-            HelpScreen(navController)
-        }
     }
 }

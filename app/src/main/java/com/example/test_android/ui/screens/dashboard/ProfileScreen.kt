@@ -61,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import androidx.navigation.NavController
+import com.example.test_android.ui.composables.UserAvatar
 import com.example.test_android.ui.theme.GrayColor
 import com.example.test_android.ui.theme.PoppinsFont
 import com.example.test_android.ui.theme.PrimaryColor
@@ -82,7 +83,9 @@ fun MyModalBottomSheet(
     ) {
         // 👇 Your modal content here
         Column(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text("Are you sure you want to unfriend Ugochukwu?", textAlign = TextAlign.Center)
@@ -241,13 +244,11 @@ fun ProfileScreen(navController: NavController, Id: Int?) {
 
                 Spacer(modifier = Modifier.size(8.dp))
 
-                AsyncImage(
-                    model = url, // Reference your image here
+                UserAvatar(
+                    photoUrl = url,
                     modifier = Modifier
-                        .size(100.dp)
-                        .clip(CircleShape),
-                    contentDescription = "user detail image",
-                    contentScale = ContentScale.Crop
+                    .size(100.dp)
+                    .clip(CircleShape)
                 )
                 Spacer(modifier = Modifier.size(16.dp))
                 Text(

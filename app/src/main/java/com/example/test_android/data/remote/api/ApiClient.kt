@@ -1,7 +1,7 @@
 package com.example.test_android.data.remote.api
 import android.content.Context
+import android.util.Log
 import com.example.test_android.data.local.TokenManager
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -9,28 +9,73 @@ import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import kotlinx.coroutines.runBlocking
+
+private const val BASE_URL = "http://192.168.43.254:8000/"
 
 
 class AuthInterceptor(private val tokenManager: TokenManager) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
-        val requestBuilder = chain.request().newBuilder()
+        var request = chain.request()
 
-        // Fetch token synchronously for interceptor
+        // Fetch access token
         val accessToken = runBlocking { tokenManager.getAccessToken() }
-
         if (!accessToken.isNullOrEmpty()) {
-            requestBuilder.addHeader("Authorization", "Bearer $accessToken")
+            request = request.newBuilder()
+                .addHeader("Authorization", "Bearer $accessToken")
+                .build()
         }
 
-        return chain.proceed(requestBuilder.build())
+        var response = chain.proceed(request)
+
+        // If unauthorized, try refreshing the token
+        if (response.code == 401) {
+            response.close() // Close the old response
+
+            val newAccessToken = refreshToken()
+
+            if (!newAccessToken.isNullOrEmpty()) {
+                // Retry original request with new access token
+                val newRequest = request.newBuilder()
+                    .removeHeader("Authorization")
+                    .addHeader("Authorization", "Bearer $newAccessToken")
+                    .build()
+
+                response = chain.proceed(newRequest)
+            }
+        }
+
+        return response
+    }
+
+    private fun refreshToken(): String? {
+        val refreshToken = runBlocking { tokenManager.getRefreshToken() }
+        if (refreshToken.isNullOrEmpty()) return null
+
+        return try {
+            val retrofit = Retrofit.Builder()
+                .baseUrl(BASE_URL) // same base url
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
+
+            val service = retrofit.create(AuthService::class.java)
+
+            val refreshResponse = runBlocking {
+                service.refreshAccessToken(mapOf("refresh" to refreshToken))
+            }
+
+            // Save the new access token
+            runBlocking { tokenManager.saveTokens(refreshResponse.access, refreshResponse.refresh) }
+
+            refreshResponse.access
+        } catch (e: Exception) {
+            Log.e("AuthInterceptor", "Refresh token failed: ${e.message}")
+            null
+        }
     }
 }
 
 
-
 object ApiClient {
-    private const val BASE_URL = "http://192.168.43.254:8000/"
     private lateinit var tokenManager: TokenManager
 
     fun init(context: Context) {
@@ -38,8 +83,12 @@ object ApiClient {
     }
 
     private val client by lazy {
+        val logging = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
         OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor(tokenManager))
+            .addInterceptor(logging) // log requests and responses
             .build()
     }
 
@@ -55,4 +104,3 @@ object ApiClient {
         retrofit.create(AuthService::class.java)
     }
 }
-

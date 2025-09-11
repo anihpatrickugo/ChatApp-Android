@@ -27,9 +27,11 @@ import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.NotificationsNone
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonOutline
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,6 +42,8 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,18 +59,19 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.test_android.ui.theme.PoppinsFont
 import com.example.test_android.ui.theme.PrimaryColor
 import com.example.test_android.R
+import com.example.test_android.ui.composables.UserAvatar
+import com.example.test_android.ui.providers.LocalUserViewModel
 import com.example.test_android.ui.theme.DangerColor
 import com.example.test_android.ui.theme.DangerLigtColor
 import com.example.test_android.ui.theme.GrayColor
 import com.example.test_android.ui.theme.SecondaryColor
-import com.example.test_android.ui.viewmodel.UserViewModel
-import com.example.test_android.ui.viewmodel.UserViewModelFactory
+import com.example.test_android.ui.viewmodel.UserState
+
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -82,8 +87,9 @@ fun LogoutModal(
     ) {
         // 👇 Your modal content here
         Column(
-            modifier = Modifier.fillMaxWidth()
-                              .padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text("Are you sure you want to logout?", textAlign = TextAlign.Center)
@@ -112,14 +118,17 @@ fun LogoutModal(
         }
     }
 }
+
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(navController: NavController) {
 
-    val context = LocalContext.current
-    val viewModel: UserViewModel = viewModel(
-        factory = UserViewModelFactory(context)
-    )
+
+
+    val userViewModel = LocalUserViewModel.current
+    val userState by userViewModel.userState.collectAsState()
+
 
 
     val scrollState = rememberScrollState()
@@ -181,40 +190,51 @@ fun SettingsScreen(navController: NavController) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp).
-                     clickable { navController.navigate("edit-profile") },
+                    .padding(vertical = 16.dp)
+                    .clickable { navController.navigate("edit-profile") },
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ){
-                AsyncImage(
-                    model = url, // Reference your image here
-                    modifier = Modifier
-                        .size(60.dp)
-                        .clip(CircleShape),
-                    contentDescription = "user image",
-                    contentScale = ContentScale.Crop
+                UserAvatar(
+                    photoUrl = (userState as? UserState.Success)?.user?.photo,
+                    modifier = Modifier.size(60.dp)
                 )
+
                 Spacer(modifier = Modifier.size(16.dp))
 
                 Column(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text("Ugochukwu",
-                        fontWeight = FontWeight.ExtraBold,
-                        fontFamily = PoppinsFont
-                    )
 
-                    Text("+92 309-0167993",
-                        fontFamily = PoppinsFont,
-                        fontSize = 12.sp,
-                    )
-
-                    Text("Available",
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = PoppinsFont,
-                        fontSize = 12.sp,
-                    )
+                    when (userState) {
+                        is UserState.Loading -> {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp))
+                        }
+                        is UserState.Success -> {
+                            val user = (userState as UserState.Success).user
+                            Text(
+                                text = "${user.username}",
+                                fontWeight = FontWeight.ExtraBold,
+                                fontFamily = PoppinsFont
+                            )
+                            Text(
+                                text = user.email,
+                                fontFamily = PoppinsFont,
+                                fontSize = 12.sp
+                            )
+                        }
+                        is UserState.Error -> {
+                            Text(
+                                text = "Error loading user",
+                                color = DangerColor,
+                                fontSize = 12.sp
+                            )
+                        }
+                        else -> {
+                            Text("No user data", fontSize = 12.sp)
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.size(16.dp))
@@ -252,7 +272,9 @@ fun SettingsScreen(navController: NavController) {
             ) {
 
                 Row(
-                    modifier = Modifier.fillMaxWidth().clickable { navController.navigate("account") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { navController.navigate("account") },
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ){
@@ -422,7 +444,9 @@ fun SettingsScreen(navController: NavController) {
 
                 //5
                 Row(
-                    modifier = Modifier.fillMaxWidth().clickable { navController.navigate("help") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { navController.navigate("help") },
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ){
@@ -465,7 +489,9 @@ fun SettingsScreen(navController: NavController) {
 
                 //6
                 Row(
-                    modifier = Modifier.fillMaxWidth().clickable { showBottomSheet = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showBottomSheet = true },
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ){
@@ -512,7 +538,7 @@ fun SettingsScreen(navController: NavController) {
         LogoutModal(
             sheetState = sheetState,
             onDismiss = {showBottomSheet = false },
-            onAccept = { viewModel.logout {
+            onAccept = { userViewModel.logout {
                 showBottomSheet = false
                 navController.navigate("login") {
                     popUpTo("home") { inclusive = true } // clear backstack

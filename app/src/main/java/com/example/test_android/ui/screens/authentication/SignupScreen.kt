@@ -1,7 +1,8 @@
 package com.example.test_android.ui.screens.authentication
 
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
 import androidx.compose.material3.IconButton
@@ -30,21 +31,24 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.font.Font
-import androidx.compose.ui.text.font.FontFamily
 import com.example.test_android.R
 import com.example.test_android.ui.theme.PrimaryColor
 import com.example.test_android.ui.theme.PoppinsFont
@@ -56,42 +60,63 @@ import com.example.test_android.ui.theme.GrayColor
 
 
 import androidx.compose.material3.ExperimentalMaterial3Api // 1. Add this import
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class) // 3. Add this annotation to the Composable
 @Composable
-fun SignupScreen(navController: NavController) {
+fun SignupScreen(navController: NavController, context: Context = LocalContext.current) {
 
 
-    val scrollState = rememberScrollState()
+    val viewModel: SignUpViewModel = viewModel()
+    val signUpState by viewModel.signUpState.collectAsStateWithLifecycle()
 
-    var first_name by remember { mutableStateOf("") }
-    var last_name by remember { mutableStateOf("") }
+
+    var firstName by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    var password1 by remember { mutableStateOf("") }
+    var password2 by remember { mutableStateOf("") }
 
-    var passwordVisible by remember { mutableStateOf(false) }
+    var passwordVisible1 by remember { mutableStateOf(false) }
+    var passwordVisible2 by remember { mutableStateOf(false) }
 
-    Column(
-        modifier = Modifier.fillMaxSize()
-            .verticalScroll(scrollState),
-        verticalArrangement = Arrangement.Bottom,
+
+
+    LaunchedEffect(signUpState) {
+        when (signUpState) {
+            is SignUpState.Success -> {
+                Toast.makeText(context, "Account Created Successfully", Toast.LENGTH_SHORT).show()
+                navController.navigate("login") {
+                    popUpTo("signup") { inclusive = true }
+                }
+            }
+            is SignUpState.Error -> {
+                Toast.makeText(context, "Signup Failed: ${(signUpState as SignUpState.Error).message}",
+                    Toast.LENGTH_SHORT).show()
+            }
+            else -> Unit
+        }
+    }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(vertical = 16.dp, horizontal = 34.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ){
-        Image(
-            modifier = Modifier.padding(bottom=30.dp),
-            painter = painterResource(id = R.drawable.chatify), // Reference your image here
-            contentDescription = "chatify icon"
-        )
-        Column(
-
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp, horizontal = 34.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ){
+        item {
+            Spacer(modifier = Modifier.height(100.dp))
+            Image(
+                modifier = Modifier.size(100.dp).padding(bottom=30.dp),
+                painter = painterResource(id = R.drawable.chatify), // Reference your image here
+                contentDescription = "chatify icon"
+            )
             Text(
                 text = "Sign up for free",
                 fontWeight = FontWeight.ExtraBold,
@@ -100,49 +125,58 @@ fun SignupScreen(navController: NavController) {
                 textAlign = TextAlign.Center
             )
 
-            Column(modifier = Modifier.padding(vertical=16.dp)) {
+        }
 
-                Text(text = "Lastname:", Modifier.padding(horizontal = 20.dp), fontWeight = FontWeight.Bold)
-                // 2. Pass the state variable to the value parameter
-                TextField(
-                    value = first_name,
-                    onValueChange = { newText: String ->
-                        // 3. Update the state variable with the new text
-                        first_name = newText
-                    },
 
-                    label = { Text("Enter your first name", color = Color.Gray, fontSize = 12.sp) },
-                    modifier = Modifier.fillMaxWidth(),
-                    textStyle = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold),
-                    singleLine = true,
-                    shape = RoundedCornerShape(50.dp),
-                    colors = TextFieldDefaults.textFieldColors(
-                        containerColor = GrayColor,
+        item {
+                Column(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = "Firstname:", Modifier.padding(horizontal = 20.dp),
+                        fontWeight = FontWeight.Bold)
+
+                    // 2. Pass the state variable to the value parameter
+                    TextField(
+                        value = firstName,
+                        onValueChange = { newText: String ->
+                            // 3. Update the state variable with the new text
+                            firstName = newText
+                        },
+
+                        label = { Text("Enter your first name", color = Color.Gray, fontSize = 12.sp) },
+                        modifier = Modifier.fillMaxWidth(),
+                        textStyle = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold),
+                        singleLine = true,
+                        shape = RoundedCornerShape(50.dp),
+                        colors = TextFieldDefaults.textFieldColors(
+                            containerColor = GrayColor,
 //                        cursorColor = Color.Blue,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent
-                    ),
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent
+                        ),
 
 
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Filled.Person,
-                            contentDescription = "user icon"
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Filled.Person,
+                                contentDescription = "user icon"
+                            )
+                        },
                         )
-                    },
+
+                }
+        }
 
 
-                    )
-
-                Spacer(modifier = Modifier.padding(vertical = 8.dp))
-
+        item {
+            Column(modifier = Modifier.fillMaxWidth()) {
                 Text(text = "Lastname:", Modifier.padding(horizontal = 20.dp), fontWeight = FontWeight.Bold)
                 // 2. Pass the state variable to the value parameter
                 TextField(
-                    value = last_name,
+                    value = lastName,
                     onValueChange = { newText: String ->
                         // 3. Update the state variable with the new text
-                        last_name = newText
+                        lastName = newText
                     },
 
                     label = { Text("Enter your last name", color = Color.Gray, fontSize = 12.sp) },
@@ -164,12 +198,13 @@ fun SignupScreen(navController: NavController) {
                             contentDescription = "user icon"
                         )
                     },
+                )
+            }
 
+        }
 
-                    )
-
-                Spacer(modifier = Modifier.padding(vertical = 8.dp))
-
+        item {
+            Column(modifier = Modifier.fillMaxWidth()) {
                 Text(text = "Username:", Modifier.padding(horizontal = 20.dp), fontWeight = FontWeight.Bold)
                 // 2. Pass the state variable to the value parameter
                 TextField(
@@ -198,12 +233,14 @@ fun SignupScreen(navController: NavController) {
                             contentDescription = "User icon"
                         )
                     },
+                )
+            }
+
+        }
 
 
-                    )
-
-                Spacer(modifier = Modifier.padding(vertical = 8.dp))
-
+        item {
+            Column(modifier = Modifier.fillMaxWidth()) {
                 Text(text = "Email:", Modifier.padding(horizontal = 20.dp), fontWeight = FontWeight.Bold)
                 // 2. Pass the state variable to the value parameter
                 TextField(
@@ -232,26 +269,27 @@ fun SignupScreen(navController: NavController) {
                             contentDescription = "Email icon"
                         )
                     },
+                )
+            }
 
+        }
 
-                    )
-
-                Spacer(modifier = Modifier.padding(vertical = 8.dp))
-
+        item {
+            Column(modifier = Modifier.fillMaxWidth()) {
                 Text(text = "Passowrd:", Modifier.padding(horizontal = 20.dp), fontWeight = FontWeight.Bold)
                 // 2. Pass the state variable to the value parameter
                 TextField(
-                    value = password,
+                    value = password1,
                     onValueChange = { newText: String ->
                         // 3. Update the state variable with the new text
-                        password = newText
+                        password1 = newText
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     label = { Text("Enter your password", color = Color.Gray, fontSize = 12.sp) },
                     modifier = Modifier.fillMaxWidth(),
                     textStyle = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold),
                     singleLine = true,
-                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    visualTransformation = if (passwordVisible1) VisualTransformation.None else PasswordVisualTransformation(),
                     shape = RoundedCornerShape(50.dp),
                     colors = TextFieldDefaults.textFieldColors(
                         containerColor = GrayColor,
@@ -269,23 +307,73 @@ fun SignupScreen(navController: NavController) {
                     },
 
                     trailingIcon = {
-                        val image = if (passwordVisible)
+                        val image = if (passwordVisible1)
                             Icons.Filled.Visibility
                         else Icons.Filled.VisibilityOff
 
-                        val description = if (passwordVisible) "Hide password" else "Show password"
+                        val description = if (passwordVisible1) "Hide password" else "Show password"
 
-                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                        IconButton(onClick = { passwordVisible1 = !passwordVisible1 }) {
                             Icon(imageVector = image, description)
                         }
                     }
 
 
                 )
+            }
+        }
+
+        item {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Text(text = "Confirm Passowrd:", Modifier.padding(horizontal = 20.dp), fontWeight = FontWeight.Bold)
+                // 2. Pass the state variable to the value parameter
+                TextField(
+                    value = password2,
+                    onValueChange = { newText: String ->
+                        // 3. Update the state variable with the new text
+                        password2= newText
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    label = { Text("Confirm your password", color = Color.Gray, fontSize = 12.sp) },
+                    modifier = Modifier.fillMaxWidth(),
+                    textStyle = TextStyle(fontSize = 12.sp, fontWeight = FontWeight.Bold),
+                    singleLine = true,
+                    visualTransformation = if (passwordVisible2) VisualTransformation.None else PasswordVisualTransformation(),
+                    shape = RoundedCornerShape(50.dp),
+                    colors = TextFieldDefaults.textFieldColors(
+                        containerColor = GrayColor,
+//                        cursorColor = Color.Blue,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent
+                    ),
+
+
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Lock,
+                            contentDescription = "Lock icon"
+                        )
+                    },
+
+                    trailingIcon = {
+                        val image = if (passwordVisible2)
+                            Icons.Filled.Visibility
+                        else Icons.Filled.VisibilityOff
+
+                        val description = if (passwordVisible2) "Hide password" else "Show password"
+
+                        IconButton(onClick = { passwordVisible2 = !passwordVisible2 }) {
+                            Icon(imageVector = image, description)
+                        }
+                    }
+
+                )
 
             }
+        }
 
 
+        item{
             Button(
                 modifier = Modifier.width(500.dp),
                 colors = ButtonDefaults.buttonColors(
@@ -293,10 +381,17 @@ fun SignupScreen(navController: NavController) {
                     contentColor = Color.White   // Sets the color of the text/icon inside
                 ),
                 onClick = {
-                    // This is the action that happens when the button is clicked
-                    navController.navigate("home")
+                    viewModel.signUp(username, email, password1, password2, firstName, lastName)
                 }) {
-                Text("sign up") // This is the text displayed on the button
+
+                when (val state = signUpState) {
+                    is SignUpState.Idle -> Text("sign up") // This is the text displayed on the button
+                    is SignUpState.Loading -> CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = Color.White,
+                        strokeWidth = 2.dp)
+                    else -> Text("sign up")
+                }
             }
 
             Text(
@@ -319,5 +414,6 @@ fun SignupScreen(navController: NavController) {
                 }
             )
         }
+
     }
 }

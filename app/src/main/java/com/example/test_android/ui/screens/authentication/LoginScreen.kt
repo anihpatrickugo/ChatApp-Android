@@ -70,7 +70,8 @@ import com.example.test_android.ui.theme.GrayColor
 @OptIn(ExperimentalMaterial3Api::class) // 3. Add this annotation to the Composable
 @Composable
 fun LoginScreen(
-    navController: NavController,
+    navController: NavController,//            firstName,
+//            lastName
     context: Context = LocalContext.current
 ) {
 
@@ -111,7 +112,7 @@ fun LoginScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ){
         Image(
-            modifier = Modifier.padding(bottom=30.dp),
+            modifier = Modifier.size(100.dp).padding(bottom=30.dp),
             painter = painterResource(id = R.drawable.chatify), // Reference your image here
             contentDescription = "chatify icon"
         )
@@ -226,7 +227,6 @@ fun LoginScreen(
                 ),
                 onClick = {
                     viewModel.login(username, password)
-//                    navController.navigate("home")
                 }) {
 
                 when (val state = loginState) {
