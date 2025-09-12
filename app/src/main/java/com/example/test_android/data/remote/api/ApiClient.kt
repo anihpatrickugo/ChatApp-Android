@@ -2,6 +2,7 @@ package com.example.test_android.data.remote.api
 import android.content.Context
 import android.util.Log
 import com.example.test_android.data.local.TokenManager
+import com.example.test_android.data.remote.websocket.ChatWebSocketClient
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -10,7 +11,9 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
-private const val BASE_URL = "http://192.168.43.254:8000/"
+private const val ENDPOINT = "192.168.43.254:8000"
+private const val BASE_URL = "http://${ENDPOINT}/"
+private const val WS_URL = "ws://${ENDPOINT}/ws/chat/"
 
 
 class AuthInterceptor(private val tokenManager: TokenManager) : Interceptor {
@@ -102,5 +105,13 @@ object ApiClient {
 
     val authService: AuthService by lazy {
         retrofit.create(AuthService::class.java)
+    }
+
+    suspend fun getWebSocketClient(): ChatWebSocketClient? {
+        val token = tokenManager.getAccessToken()
+
+        return if (!token.isNullOrEmpty()) {
+            ChatWebSocketClient(token, WS_URL)
+        } else null
     }
 }

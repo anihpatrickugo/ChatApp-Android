@@ -15,6 +15,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.font.FontWeight
@@ -38,7 +39,7 @@ fun OnboardingScreen(navController: NavController) {
         horizontalAlignment = Alignment.CenterHorizontally
     ){
         Image(
-            modifier = Modifier.padding(bottom=30.dp),
+            modifier = Modifier.size(100.dp).padding(bottom=30.dp),
             painter = painterResource(id = R.drawable.chatify), // Reference your image here
             contentDescription = "chatify icon"
         )

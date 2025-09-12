@@ -57,6 +57,7 @@ import com.example.test_android.domain.ChatMessage
 import com.example.test_android.domain.Sender
 import com.example.test_android.R
 import com.example.test_android.ui.composables.ChatList
+import com.example.test_android.ui.viewmodel.ChatViewModel
 import kotlinx.coroutines.launch
 
 
@@ -65,7 +66,12 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChatDetailScreen(navController: NavController, itemId: Int?) {
+fun ChatDetailScreen(
+    navController: NavController, itemId: Int?, chatViewModel: ChatViewModel) {
+
+    val chatMessages = chatViewModel.messages
+
+
     val now = System.currentTimeMillis()
     val oneDay = 24 * 60 * 60 * 1000L
 

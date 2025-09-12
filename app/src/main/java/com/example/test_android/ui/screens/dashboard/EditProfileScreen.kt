@@ -228,10 +228,7 @@ fun EditProfileScreen(navController: NavController) {
     val userViewModel = LocalUserViewModel.current
     val userState by userViewModel.userState.collectAsState()
     val user = (userState as UserState.Success).user
-
-
-
-    val scrollState = rememberScrollState()
+    
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showBottomSheet by remember { mutableStateOf(false) }

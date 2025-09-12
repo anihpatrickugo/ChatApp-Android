@@ -20,7 +20,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.example.test_android.data.local.TokenManager
+import com.example.test_android.data.remote.api.ApiClient
 import com.example.test_android.ui.providers.LocalUserViewModel
 import com.example.test_android.ui.screens.authentication.OnboardingScreen
 import com.example.test_android.ui.screens.authentication.LoginScreen
@@ -35,6 +35,7 @@ import com.example.test_android.ui.screens.dashboard.SettingsScreen
 import com.example.test_android.ui.screens.dashboard.EditProfileScreen
 import com.example.test_android.ui.screens.dashboard.HelpScreen
 import com.example.test_android.ui.screens.dashboard.QRCodeTab.QRCodeTab
+import com.example.test_android.ui.viewmodel.ChatViewModel
 import com.example.test_android.ui.viewmodel.UserViewModel
 import com.example.test_android.ui.viewmodel.UserViewModelFactory
 
@@ -45,8 +46,13 @@ class MainActivity : ComponentActivity() {
         UserViewModelFactory(this)
     }
 
+    private val chatViewModel: ChatViewModel by viewModels()
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
 
         // Tell system to let Compose handle keyboard insets
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -60,7 +66,7 @@ class MainActivity : ComponentActivity() {
                     color = Color(red=255,green=255, blue=255),
 
                     ) {
-                      MyAppNavigation(userViewModel)
+                      MyAppNavigation(userViewModel, chatViewModel)
                 }
             }
         }
@@ -68,10 +74,14 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MyAppNavigation(userViewModel: UserViewModel) {
+fun MyAppNavigation(userViewModel: UserViewModel, chatViewModel: ChatViewModel) {
 
+    // Fetch user info, then connect WebSocket once authenticated
     LaunchedEffect(Unit) {
-        userViewModel.getUserInfo()
+        val user = userViewModel.getUserInfo() // suspend function to fetch user
+        if (user != null) {
+            chatViewModel.connect() // connect only after user is authenticated
+        }
     }
 
 
@@ -103,7 +113,7 @@ fun MyAppNavigation(userViewModel: UserViewModel) {
                 arguments = listOf(navArgument("itemId") { type = NavType.IntType })
             ) { backStackEntry ->
                 val itemId = backStackEntry.arguments?.getInt("itemId")
-                ChatDetailScreen(navController=navController, itemId = itemId)
+                ChatDetailScreen(navController=navController, itemId = itemId, chatViewModel = chatViewModel)
             }
 
             composable(
