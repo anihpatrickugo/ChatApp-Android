@@ -204,7 +204,8 @@ fun SettingsScreen(navController: NavController) {
 
                 Column(
                     modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.Center
+                    verticalArrangement = Arrangement.Center,
+
                 ) {
 
                     when (userState) {
@@ -218,11 +219,19 @@ fun SettingsScreen(navController: NavController) {
                                 fontWeight = FontWeight.ExtraBold,
                                 fontFamily = PoppinsFont
                             )
-                            Text(
-                                text = user.email,
-                                fontFamily = PoppinsFont,
-                                fontSize = 12.sp
-                            )
+                            if(user.email !=  ""){
+                                Text(
+                                    text = user.email,
+                                    fontFamily = PoppinsFont,
+                                    fontSize = 12.sp
+                                )
+                            }else{
+                                Text(
+                                    text = "Email not set",
+                                    fontFamily = PoppinsFont,
+                                    fontSize = 12.sp
+                                )
+                            }
                         }
                         is UserState.Error -> {
                             Text(

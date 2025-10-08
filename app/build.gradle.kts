@@ -81,6 +81,19 @@ dependencies {
     // DataStore (Preferences)
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
+    // algolia
+    implementation("com.algolia:instantsearch-android:3.+")
+    implementation("com.algolia:instantsearch-compose:3.+")
+
+    implementation("com.algolia:instantsearch-android-paging3:3+")
+
+    // Jetpack Paging 3
+    implementation ("androidx.paging:paging-runtime:3.3.2")
+    implementation("androidx.paging:paging-compose:3.3.2")
+
+
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
 
 
 

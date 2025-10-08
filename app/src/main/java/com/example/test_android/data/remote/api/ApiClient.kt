@@ -10,10 +10,11 @@ import okhttp3.Response
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
-private const val ENDPOINT = "192.168.43.254:8000"
-private const val BASE_URL = "http://${ENDPOINT}/"
-private const val WS_URL = "ws://${ENDPOINT}/ws/chat/"
+private const val ENDPOINT = "chatapp-p6tu.onrender.com"
+private const val BASE_URL = "https://${ENDPOINT}/"
+private const val WS_URL = "wss://${ENDPOINT}/ws/chat/"
 
 
 class AuthInterceptor(private val tokenManager: TokenManager) : Interceptor {
@@ -90,6 +91,10 @@ object ApiClient {
             level = HttpLoggingInterceptor.Level.BODY
         }
         OkHttpClient.Builder()
+            .connectTimeout(2, TimeUnit.MINUTES)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .callTimeout(60, TimeUnit.SECONDS)
             .addInterceptor(AuthInterceptor(tokenManager))
             .addInterceptor(logging) // log requests and responses
             .build()
@@ -105,6 +110,14 @@ object ApiClient {
 
     val authService: AuthService by lazy {
         retrofit.create(AuthService::class.java)
+    }
+
+    val chatApi: ChatApi by lazy {
+        retrofit.create(ChatApi::class.java)
+    }
+
+    val friendRequestService: FriendRequestService by lazy {
+        retrofit.create(FriendRequestService::class.java)
     }
 
     suspend fun getWebSocketClient(): ChatWebSocketClient? {

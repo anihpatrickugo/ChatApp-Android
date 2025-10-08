@@ -3,6 +3,7 @@ package com.example.test_android.ui.screens.dashboard
 
 import android.net.Uri
 import android.os.Environment
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -35,6 +36,7 @@ import androidx.compose.material.icons.filled.Mail
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,6 +48,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -70,7 +73,10 @@ import com.example.test_android.ui.theme.PoppinsFont
 import com.example.test_android.ui.theme.PrimaryColor
 import com.example.test_android.ui.theme.GrayColor
 import com.example.test_android.ui.theme.SecondaryColor
+import com.example.test_android.ui.viewmodel.UiEvent
 import com.example.test_android.ui.viewmodel.UserState
+import com.example.test_android.utils.uriToFile
+
 import java.io.File
 
 
@@ -224,11 +230,14 @@ fun PhotoModalBottomSheet(
 @Composable
 fun EditProfileScreen(navController: NavController) {
 
+    val context = LocalContext.current
+
 
     val userViewModel = LocalUserViewModel.current
     val userState by userViewModel.userState.collectAsState()
-    val user = (userState as UserState.Success).user
-    
+    val user = (userState as? UserState.Success)?.user
+
+
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var showBottomSheet by remember { mutableStateOf(false) }
@@ -236,10 +245,36 @@ fun EditProfileScreen(navController: NavController) {
 
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
 
-    var username by remember { mutableStateOf("${user.username}") }
-    var email by remember { mutableStateOf("${user.email}") }
-    var firstName by remember { mutableStateOf("${user.firstName}") }
-    var lastName by remember { mutableStateOf("${user.lastName}") }
+    var username by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var firstName by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
+
+
+    // Populate text fields once when Success comes in
+    LaunchedEffect(userState) {
+        if (userState is UserState.Success) {
+            val user = (userState as UserState.Success).user
+            username = user.username ?: ""
+            email = user.email ?: ""
+            firstName = user.firstName ?: ""
+            lastName = user.lastName ?: ""
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        userViewModel.uiEvent.collect { event ->
+            when (event) {
+                is UiEvent.ShowToast -> {
+                    Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                }
+                is UiEvent.NavigateBack -> {
+                    navController.popBackStack()
+                }
+            }
+        }
+    }
+
 
     Scaffold(
         modifier = Modifier.padding(16.dp),
@@ -343,7 +378,7 @@ fun EditProfileScreen(navController: NavController) {
 
                     } else {
                         UserAvatar(
-                            photoUrl = user.photo,
+                            photoUrl = user?.photo,
                             modifier = Modifier
                                 .size(80.dp)
                                 .clip(RoundedCornerShape(24.dp))
@@ -370,6 +405,7 @@ fun EditProfileScreen(navController: NavController) {
                 }
 
                 Spacer(modifier = Modifier.size(16.dp))
+
 
             }
 
@@ -527,19 +563,30 @@ fun EditProfileScreen(navController: NavController) {
                         contentColor = Color.White   // Sets the color of the text/icon inside
                     ),
                     onClick = {
-//                        viewModel.signUp(username, email, firstName, lastName)
+                         val photoFile = selectedImageUri?.let { uri ->
+                             navController.context.uriToFile(uri) // 👈 convert Uri to File
+                         }
+
+                          userViewModel.updateProfile(
+                               username = username,
+                               email = email,
+                               firstName = firstName,
+                               lastName = lastName,
+                               photo = photoFile
+                          )
                     }) {
+//                         Text("Edit Profile")
 
-                    Text("Edit Profile")
+                    when (val state = userState) {
+                        is UserState.Loading -> CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = Color.White,
+                            strokeWidth = 2.dp
+                        )
 
-//                    when (val state = signUpState) {
-//                        is SignUpState.Idle -> Text("Edit Profile") // This is the text displayed on the button
-//                        is SignUpState.Loading -> CircularProgressIndicator(
-//                            modifier = Modifier.size(24.dp),
-//                            color = Color.White,
-//                            strokeWidth = 2.dp)
-//                        else -> Text("Edit Profile")
-//                    }
+                        else -> Text("Edit Profile")
+                    }
+
                 }
 
             }

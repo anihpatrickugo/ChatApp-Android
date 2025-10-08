@@ -2,13 +2,12 @@ package com.example.test_android.utils
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.common.BitMatrix
 import com.example.test_android.domain.ChatMessage
 import java.text.SimpleDateFormat
-import java.util.Date
+import java.util.*
 import java.util.Locale
 
 fun generateQRCode(content: String, size: Int = 512): Bitmap {
@@ -47,4 +46,22 @@ fun groupMessagesByDay(messages: List<ChatMessage>): Map<String, List<ChatMessag
 fun formatTime(timestamp: Long): String {
     val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
     return sdf.format(Date(timestamp))
+}
+
+
+
+
+
+fun formatTimestampToDateTime(timestamp: String): String {
+    return try {
+        val parser = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'", Locale.getDefault())
+        parser.timeZone = TimeZone.getTimeZone("UTC") // Backend sends in UTC
+        val date = parser.parse(timestamp)
+
+        // Example: "Sep 17, 2025 10:03 AM"
+        val formatter = SimpleDateFormat("MMM dd, yyyy hh:mm a", Locale.getDefault())
+        formatter.format(date ?: Date())
+    } catch (e: Exception) {
+        "" // fallback if parsing fails
+    }
 }

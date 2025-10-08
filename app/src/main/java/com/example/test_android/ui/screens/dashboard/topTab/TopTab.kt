@@ -42,15 +42,21 @@ import com.example.test_android.ui.screens.dashboard.topTab.GroupsScreen
 import com.example.test_android.ui.screens.dashboard.topTab.FriendsScreen
 import com.example.test_android.ui.theme.PrimaryColor
 import androidx.compose.runtime.*
+import com.algolia.instantsearch.compose.searchbox.SearchBoxState
+import com.algolia.search.model.response.ResponseSearch
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TopTabsScreen(navController: NavController) {
+fun TopTabsScreen(navController: NavController,
+                  friendList : List<ResponseSearch.Hit>,
+                  searchBoxState: SearchBoxState
+) {
     val pagerState = rememberPagerState {
         tabItems.size
     }
     var expanded by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -70,18 +76,18 @@ fun TopTabsScreen(navController: NavController) {
             fontFamily = PoppinsFont,
             fontSize = 18.sp,
             textAlign = TextAlign.Center
-        )
+           )
 
            Row(){
-               IconButton(onClick = {
-                   print("clicked icon")
-               }) {
-                   Icon(
-                       imageVector = Icons.Default.Search,
-                       contentDescription = "Search"
-
-                   )
-               }
+//               IconButton(onClick = {
+//                   print("clicked icon")
+//               }) {
+//                   Icon(
+//                       imageVector = Icons.Default.Search,
+//                       contentDescription = "Search"
+//
+//                   )
+//               }
 
                IconButton(
                    onClick = {
@@ -111,7 +117,7 @@ fun TopTabsScreen(navController: NavController) {
                        text = { Text("New Requests") },
                        onClick = {
                            expanded = false
-//                    onLogoutClick()
+                           navController.navigate("friend-requests")
                        }
                    )
                }
@@ -162,7 +168,8 @@ fun TopTabsScreen(navController: NavController) {
             when (tabItems[page]) {
                 is TabItem.Chats -> ChatsScreen(navController)
                 is TabItem.Groups -> GroupsScreen(navController)
-                is TabItem.Friends -> FriendsScreen(navController)
+                is TabItem.Friends -> FriendsScreen(navController, friendList = friendList,
+                    searchBoxState = searchBoxState)
                 else -> {}
             }
         }

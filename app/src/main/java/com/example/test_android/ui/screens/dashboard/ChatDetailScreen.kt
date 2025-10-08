@@ -3,16 +3,9 @@ package com.example.test_android.ui.screens.dashboard
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,23 +13,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.PersonPin
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,51 +26,54 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import androidx.navigation.NavController
-import com.example.test_android.ui.theme.GrayColor
-import com.example.test_android.ui.theme.PoppinsFont
-import com.example.test_android.ui.theme.PrimaryColor
-import com.example.test_android.ui.theme.SecondaryColor
-import com.example.test_android.domain.ChatMessage
-import com.example.test_android.domain.Sender
 import com.example.test_android.R
-import com.example.test_android.ui.composables.ChatList
+import com.example.test_android.data.remote.model.User
+import com.example.test_android.ui.providers.LocalUserViewModel
+import com.example.test_android.ui.theme.*
+import com.example.test_android.ui.viewmodel.ChatDetailFriendViewModel
+import com.example.test_android.ui.viewmodel.ChatMessage
 import com.example.test_android.ui.viewmodel.ChatViewModel
+import com.example.test_android.ui.viewmodel.UserState
 import kotlinx.coroutines.launch
-
-
-
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatDetailScreen(
-    navController: NavController, itemId: Int?, chatViewModel: ChatViewModel) {
+    navController: NavController,
+    roomId: Int?,
+    chatViewModel: ChatViewModel,
+    chatDetailFriendViewModel: ChatDetailFriendViewModel = viewModel()
+) {
+    val userViewModel = LocalUserViewModel.current
+    val userState by userViewModel.userState.collectAsState()
 
-    val chatMessages = chatViewModel.messages
+
+    // your friend detail(the person you are chatting with)
+    val friendState by chatDetailFriendViewModel.friend.collectAsState()
 
 
-    val now = System.currentTimeMillis()
-    val oneDay = 24 * 60 * 60 * 1000L
+    val allMessages by chatViewModel.messages.collectAsState()
+    val messages = allMessages.filter { it.roomId == roomId } // 🔹 only messages for this room
 
-    var url = "https://imgs.search.brave.com/cxK8yYoMfgHkWGAMV5994P1TJD_KjjJr1flcmxioz00/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pMC53/cC5jb20vcGljanVt/Ym8uY29tL3dwLWNv/bnRlbnQvdXBsb2Fk/cy93b21hbi13aXRo/LXN1bi1nbGFzc2Vz/LWluLWZsb3dlci1m/aWVsZC1zdW1tZXIt/ZnJlZS1waG90by5q/cGc_dz02MDAmcXVh/bGl0eT04MA"
-
-    val messages = listOf(
-        ChatMessage(1, "Hey, how are you?", now - 1000 * 60 * 5, Sender.ME),
-        ChatMessage(2, "I’m good, you?", now - 1000 * 60 * 3, Sender.OTHER),
-        ChatMessage(3, "Doing great 👍", now - 1000 * 60 * 1, Sender.ME),
-        ChatMessage(4, "Let’s meet tomorrow", now - oneDay + 1000 * 60 * 60 * 2, Sender.OTHER),
-        ChatMessage(5, "Sure!", now - oneDay + 1000 * 60 * 60 * 5, Sender.ME)
-    )
 
     var text by remember { mutableStateOf("") }
-
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
 
-    // Whenever the messages size changes, scroll to the last one
+    // 🔹 Load history when entering room
+    LaunchedEffect(roomId) {
+        if (roomId != null) {
+            chatViewModel.loadHistory(roomId)
+            chatDetailFriendViewModel.fetchFriendInRoom(roomId)
+        }
+    }
+
+    // Auto scroll on new message
     LaunchedEffect(messages.size) {
+
         if (messages.isNotEmpty()) {
             coroutineScope.launch {
                 listState.animateScrollToItem(messages.size - 1)
@@ -99,131 +81,252 @@ fun ChatDetailScreen(
         }
     }
 
-    Scaffold(
-        modifier = Modifier.padding(16.dp),
-        topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(75.dp),
-                verticalAlignment = Alignment.CenterVertically,
 
-            ) {
-                IconButton(onClick = { navController.popBackStack() }) {
-                    Icon(
-                        imageVector = Icons.Filled.ArrowBack,
-                        contentDescription = "Back"
+    when (userState){
+        is UserState.Success -> {
+            val user = (userState as UserState.Success).user
+
+            Scaffold(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 16.dp),
+                topBar = {
+                    ChatTopBar(navController = navController, friendState = friendState)
+
+                },
+                bottomBar = {
+                    ChatInput(
+                        text = text,
+                        onTextChange = { text = it },
+                        onSendClick = {
+                            if (text.isNotBlank()) {
+                                chatViewModel.sendMessage(roomId!!, text, "admin")
+                                text = "" // clear input
+                            }
+                        }
                     )
                 }
-                Card(
-                    modifier = Modifier.weight(1f)
-                        .clickable(onClick = { navController.navigate("profile/$itemId")}),
-
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color.Transparent
-                    )
+            ) { innerPadding ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
                 ) {
-                    Row (
-                        modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically
-                    ){
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(8.dp)
+                    ) {
+                        items(messages) { message ->
+                            ChatBubble(message, user.username)
+                        }
+                    }
+                }
+            }
+
+        }
+        is UserState.Loading -> {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+
+        is UserState.Error -> {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Error: ${(userState as UserState.Error).message}", color = Color.Red)
+            }
+        }
+
+        UserState.Idle -> {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Idle…")
+            }
+        }
+    }
+
+
+}
+
+@Composable
+fun ChatTopBar(navController: NavController, friendState: UserState) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(75.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        IconButton(onClick = { navController.popBackStack() }) {
+            Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Back")
+        }
+
+        when(friendState){
+            is UserState.Loading -> {
+                Row(
+                    modifier = Modifier.weight(1f)
+                ){
+                    Text("Loading")
+                }
+            }
+            is UserState.Error -> {
+                Row(
+                    modifier = Modifier.weight(1f)
+                ){
+                    Text("Error", color = Color.Red)
+                }
+
+            }
+            is UserState.Success -> {
+                val friend = friendState.user
+                // Fake avatar + name
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clickable { navController.navigate("profile/${friend.id}") },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    if (friend?.photo != null){
                         AsyncImage(
-                            model = url, // Reference your image here
+                            model = friend.photo, // Reference your image here
                             modifier = Modifier
                                 .size(40.dp)
                                 .clip(CircleShape),
-                            contentDescription = "user detail image",
+                            contentDescription = "user image",
                             contentScale = ContentScale.Crop
                         )
-                        Spacer(modifier = Modifier.size(16.dp))
-                        Text(
-                            text = "Ugochukwu",
-                            fontWeight = FontWeight.Bold,
-                            fontFamily = PoppinsFont,
-                            fontSize = 16.sp,
-                            modifier = Modifier.weight(1f)
+                    }else {
+                        Icon(
+                            imageVector = Icons.Default.PersonPin,
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape),
+                            contentDescription = "user icon"
                         )
                     }
-                }
 
-                IconButton(
-                    modifier = Modifier
-                        .background(SecondaryColor)
-                        .border(1.dp, PrimaryColor, RoundedCornerShape(12.dp))
-                        .clip(RoundedCornerShape(12.dp)),
-                    onClick = { },
-
-                    ) {
-
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = "More"
-
+                    Spacer(modifier = Modifier.size(16.dp))
+                    Text(
+                        text = friend.username,
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = PoppinsFont,
+                        fontSize = 16.sp,
+                        modifier = Modifier.weight(1f)
                     )
                 }
 
             }
-            HorizontalDivider(
-                thickness = 1.dp,
-                color = Color.LightGray
+            else -> Row(
+                modifier = Modifier.weight(1f)
+            ){
+                Text("Error", color = Color.Red)
+            }
+        }
+       
+        IconButton(
+            modifier = Modifier
+                .background(SecondaryColor)
+                .border(1.dp, PrimaryColor, RoundedCornerShape(12.dp))
+                .clip(RoundedCornerShape(12.dp)),
+            onClick = { }
+        ) {
+            Icon(imageVector = Icons.Default.MoreVert, contentDescription = "More")
+        }
+    }
+    HorizontalDivider(thickness = 1.dp, color = Color.LightGray)
+}
+
+@Composable
+fun ChatInput(text: String, onTextChange: (String) -> Unit, onSendClick: () -> Unit) {
+    OutlinedTextField(
+        value = text,
+        onValueChange = onTextChange,
+        placeholder = { Text("Type a message…", fontSize = 12.sp) },
+        modifier = Modifier
+            .fillMaxWidth()
+            .imePadding()
+            .padding(16.dp),
+        textStyle = TextStyle(fontSize = 14.sp),
+        maxLines = 3,
+        leadingIcon = {
+            Icon(
+                painter = painterResource(id = R.drawable.smileicon),
+                contentDescription = "Emoji"
             )
         },
-        bottomBar = {
-            OutlinedTextField(
-                value = text,
-                onValueChange = { text = it },
-                placeholder = { Text("Type a message…", fontSize = 12.sp) },
+        trailingIcon = {
+            IconButton(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .imePadding() // pushes up when keyboard is open
-                    .padding(16.dp),
-                textStyle = TextStyle(fontSize = 14.sp),
-                maxLines = 3,
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(id = R.drawable.smileicon),
-                        contentDescription = "Email icon"
-                    )
-                },
-                trailingIcon ={
-                    IconButton(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .padding(end = 8.dp)
-                            .background(PrimaryColor, CircleShape),
-                        onClick = {},
+                    .size(36.dp)
+                    .padding(end = 8.dp)
+                    .background(PrimaryColor, CircleShape),
+                onClick = onSendClick
+            ) {
+                Icon(imageVector = Icons.Filled.ArrowUpward, contentDescription = "Send")
+            }
+        },
+        shape = RoundedCornerShape(50.dp),
+        colors = TextFieldDefaults.colors(
+            unfocusedContainerColor = Color.Transparent,
+            focusedContainerColor = SecondaryColor,
+            disabledContainerColor = GrayColor,
+            focusedIndicatorColor = PrimaryColor,
+            unfocusedIndicatorColor = Color.Gray
+        )
+    )
+}
 
-                        ) {
+@Composable
+fun ChatBubble(message: ChatMessage, currentUser: String) {
+    val isMe = message.user == currentUser || message.user == "me" // handle optimistic case too
 
-                        Icon(
-                            imageVector = Icons.Filled.ArrowUpward,
-                            contentDescription = "More"
+    val bubbleColor = when {
+        message.pending -> Color.LightGray.copy(alpha = 0.6f) // pending = faded gray
+        isMe -> PrimaryColor
+        else -> SecondaryColor
+    }
 
+    val arrangement = when {
+        isMe -> Arrangement.End
+        else -> Arrangement.Start
+    }
+
+
+    val textColor = if (isMe && !message.pending) Color.White else Color.Black
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = arrangement
+    ) {
+        Card(
+            colors = CardDefaults.cardColors(containerColor = bubbleColor),
+            shape = RoundedCornerShape(12.dp),
+            modifier = Modifier.padding(4.dp)
+        ) {
+            Column(modifier = Modifier.padding(8.dp)) {
+                Text(
+                    text = message.message,
+                    color = textColor,
+                    fontSize = 14.sp,
+                    fontWeight = if (message.pending) FontWeight.Light else FontWeight.Normal
+                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (message.pending) {
+                        Text(
+                            text = "Sending…",
+                            color = Color.DarkGray,
+                            fontSize = 10.sp,
+                            modifier = Modifier.padding(end = 4.dp)
+                        )
+                    } else {
+                        Text(
+                            text = message.timestamp.take(5), // HH:mm
+                            color = textColor.copy(alpha = 0.7f),
+                            fontSize = 10.sp,
+                            modifier = Modifier.padding(end = 4.dp)
                         )
                     }
-                },
-                shape = RoundedCornerShape(50.dp),
-                colors = TextFieldDefaults.colors(
-                    unfocusedContainerColor = Color.Transparent,
-                    focusedContainerColor = SecondaryColor,
-                    disabledContainerColor = GrayColor,
-                    focusedIndicatorColor = PrimaryColor,
-                    unfocusedIndicatorColor = Color.Gray,
-
-                )
-
-            )
-        }
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            ChatList(messages)
+                }
+            }
         }
     }
 }
-
-
 

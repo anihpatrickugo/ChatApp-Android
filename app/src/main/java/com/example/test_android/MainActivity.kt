@@ -20,6 +20,19 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.algolia.instantsearch.compose.hits.HitsState
+import com.algolia.instantsearch.compose.searchbox.SearchBoxState
+import com.algolia.instantsearch.core.connection.ConnectionHandler
+import com.algolia.instantsearch.core.hits.connectHitsView
+import com.algolia.instantsearch.searchbox.SearchBoxConnector
+import com.algolia.instantsearch.searchbox.connectView
+import com.algolia.instantsearch.searcher.hits.HitsSearcher
+import com.algolia.search.client.ClientSearch
+import com.algolia.search.logging.LogLevel
+import com.algolia.search.model.APIKey
+import com.algolia.search.model.ApplicationID
+import com.algolia.search.model.IndexName
+import com.algolia.search.model.response.ResponseSearch
 import com.example.test_android.data.remote.api.ApiClient
 import com.example.test_android.ui.providers.LocalUserViewModel
 import com.example.test_android.ui.screens.authentication.OnboardingScreen
@@ -33,6 +46,7 @@ import com.example.test_android.ui.screens.dashboard.ProfileScreen
 import com.example.test_android.ui.screens.dashboard.GroupInfoScreen
 import com.example.test_android.ui.screens.dashboard.SettingsScreen
 import com.example.test_android.ui.screens.dashboard.EditProfileScreen
+import com.example.test_android.ui.screens.dashboard.FriendRequestScreen
 import com.example.test_android.ui.screens.dashboard.HelpScreen
 import com.example.test_android.ui.screens.dashboard.QRCodeTab.QRCodeTab
 import com.example.test_android.ui.viewmodel.ChatViewModel
@@ -47,6 +61,38 @@ class MainActivity : ComponentActivity() {
     }
 
     private val chatViewModel: ChatViewModel by viewModels()
+
+     /////////////
+
+    private val client = ClientSearch(
+        ApplicationID("ZWSMUOIMMN"),
+        APIKey("806e9396106419523d4730623a3f9b8e"),
+        LogLevel.All
+    )
+    private val indexName = IndexName("users")
+    private val searcher = HitsSearcher(client, indexName)
+    private val hitsState = HitsState<ResponseSearch.Hit>()
+
+    // Search box
+    val searchBoxState = SearchBoxState()
+    val searchBoxConnector = SearchBoxConnector(searcher)
+
+
+    val connections = ConnectionHandler(searchBoxConnector)
+
+
+    init {
+        connections += searchBoxConnector.connectView(searchBoxState)
+
+        connections += searcher.connectHitsView(hitsState) { response ->
+            // Only use hits when query is not empty
+            if (searchBoxState.query.isNotBlank()) {
+                response.hits
+            } else {
+                emptyList() // return empty list if query is blank
+            }
+        }
+    }
 
 
 
@@ -66,15 +112,27 @@ class MainActivity : ComponentActivity() {
                     color = Color(red=255,green=255, blue=255),
 
                     ) {
-                      MyAppNavigation(userViewModel, chatViewModel)
+                      MyAppNavigation(userViewModel, chatViewModel,
+                          friendList = hitsState.hits,
+                          searchBoxState = searchBoxState
+                      )
                 }
             }
         }
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        searcher.cancel()
+        connections.clear()
+    }
 }
 
 @Composable
-fun MyAppNavigation(userViewModel: UserViewModel, chatViewModel: ChatViewModel) {
+fun MyAppNavigation(userViewModel: UserViewModel, chatViewModel: ChatViewModel,
+                    friendList : List<ResponseSearch.Hit>,
+                    searchBoxState: SearchBoxState
+) {
 
     // Fetch user info, then connect WebSocket once authenticated
     LaunchedEffect(Unit) {
@@ -105,23 +163,26 @@ fun MyAppNavigation(userViewModel: UserViewModel, chatViewModel: ChatViewModel) 
                 SignupScreen(navController = navController)
             }
             composable("home") {
-                TopTabsScreen(navController = navController)
+                TopTabsScreen(navController = navController,
+                    friendList = friendList,
+                    searchBoxState = searchBoxState
+                )
             }
 
             composable(
-                route = "chat-detail/{itemId}",
-                arguments = listOf(navArgument("itemId") { type = NavType.IntType })
+                route = "chat-detail/{roomId}",
+                arguments = listOf(navArgument("roomId") { type = NavType.IntType })
             ) { backStackEntry ->
-                val itemId = backStackEntry.arguments?.getInt("itemId")
-                ChatDetailScreen(navController=navController, itemId = itemId, chatViewModel = chatViewModel)
+                val roomId = backStackEntry.arguments?.getInt("roomId")
+                ChatDetailScreen(navController=navController, roomId = roomId, chatViewModel = chatViewModel)
             }
 
             composable(
-                route = "group-chat-detail/{itemId}",
-                arguments = listOf(navArgument("itemId") { type = NavType.IntType })
+                route = "group-chat-detail/{roomId}",
+                arguments = listOf(navArgument("roomId") { type = NavType.IntType })
             ) { backStackEntry ->
-                val itemId = backStackEntry.arguments?.getInt("itemId")
-                GroupChatDetailScreen(navController=navController, itemId = itemId)
+                val roomId = backStackEntry.arguments?.getInt("roomId")
+                GroupChatDetailScreen(navController=navController, roomId = roomId)
             }
 
 
@@ -139,6 +200,11 @@ fun MyAppNavigation(userViewModel: UserViewModel, chatViewModel: ChatViewModel) 
             ) { backStackEntry ->
                 val Id = backStackEntry.arguments?.getInt("Id")
                 GroupInfoScreen(navController=navController, Id = Id)
+            }
+
+
+            composable("friend-requests") {
+                FriendRequestScreen(navController = navController)
             }
 
             composable("settings") {

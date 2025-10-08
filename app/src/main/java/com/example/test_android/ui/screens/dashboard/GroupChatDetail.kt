@@ -65,7 +65,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GroupChatDetailScreen(navController: NavController, itemId: Int?) {
+fun GroupChatDetailScreen(navController: NavController, roomId: Int?) {
     val now = System.currentTimeMillis()
     val oneDay = 24 * 60 * 60 * 1000L
 
@@ -112,7 +112,7 @@ fun GroupChatDetailScreen(navController: NavController, itemId: Int?) {
                 }
                 Card(
                     modifier = Modifier.weight(1f)
-                        .clickable(onClick = { navController.navigate("group/$itemId")}),
+                        .clickable(onClick = { navController.navigate("group/$roomId")}),
 
                     colors = CardDefaults.cardColors(
                         containerColor = Color.Transparent
